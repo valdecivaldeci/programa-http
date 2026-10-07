@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetria ROV - Sensores</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; text-align: center; padding: 20px; }
+        .panel { background: white; border-radius: 10px; padding: 15px; margin: 15px auto; max-width: 400px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .sensor-panel { border: 1px solid #2196F3; background: #e3f2fd; }
+        .bmp-panel { border: 1px solid #009688; background: #e0f2f1; }
+        .sensor-data { font-size: 18px; font-weight: bold; color: #333; margin: 8px 0; }
+        #status { font-weight: bold; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <h1>Telemetria do ROV</h1>
+    <div id="status" style="color: orange;">Conectando ao broker MQTT...</div>
+
+    <div class="panel sensor-panel">
+        <h2>Acelerômetro MPU6050</h2>
+        <div class="sensor-data">Eixo X: <span id='accX'>0.00</span> g</div>
+        <div class="sensor-data">Eixo Y: <span id='accY'>0.00</span> g</div>
+        <div class="sensor-data">Eixo Z: <span id='accZ'>0.00</span> g</div>
+        <div class="sensor-data">Temperatura IMU: <span id='tempIMU'>0.0</span> &deg;C</div>
+    </div>
+
+    <div class="panel bmp-panel">
+        <h2>Sensor Pressão/Alt. (BMP280)</h2>
+        <div class="sensor-data">Pressão: <span id='bmpPress'>0.00</span> hPa</div>
+        <div class="sensor-data">Temperatura: <span id='bmpTemp'>0.00</span> &deg;C</div>
+        <div class="sensor-data">Altitude Aprox.: <span id='bmpAlt'>0.00</span> m</div>
+    </div>
+
+    <script>
+        const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+
+        client.on('connect', function () {
+            let statusEl = document.getElementById('status');
+            statusEl.innerText = 'Conectado com sucesso!';
+            statusEl.style.color = 'green';
+            client.subscribe('ifsp/rov/sensores');
+        });
+
+        client.on('message', function (topic, message) {
+            if (topic === 'ifsp/rov/sensores') {
+                let data = JSON.parse(message.toString());
+                document.getElementById('accX').innerText = data.accX.toFixed(2);
+                document.getElementById('accY').innerText = data.accY.toFixed(2);
+                document.getElementById('accZ').innerText = data.accZ.toFixed(2);
+                document.getElementById('tempIMU').innerText = data.tempIMU.toFixed(1);
+                document.getElementById('bmpPress').innerText = data.bmpPress.toFixed(2);
+                document.getElementById('bmpTemp').innerText = data.bmpTemp.toFixed(2);
+                document.getElementById('bmpAlt').innerText = data.bmpAlt.toFixed(2);
+            }
+        });
+    </script>
+</body>
+</html>
